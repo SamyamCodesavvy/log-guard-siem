@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from app.config import get_settings
+from app.api import auth
 
 settings = get_settings()
 
@@ -33,6 +34,7 @@ app = FastAPI(
     description="Mini SIEM Platform for security log analysis",
     lifespan=lifespan,
 )
+app.include_router(auth.router)
 
 @app.get("/health")
 async def health_check():
