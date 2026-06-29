@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from app.config import get_settings
-from app.api import auth, hosts, logs, alerts
+from app.api import auth, hosts, logs, alerts, dashboard, search
 
 settings = get_settings()
 
@@ -38,7 +38,8 @@ app.include_router(auth.router)
 app.include_router(hosts.router)
 app.include_router(logs.router)
 app.include_router(alerts.router)
-
+app.include_router(dashboard.router)
+app.include_router(search.router)
 
 @app.get("/health")
 async def health_check():
