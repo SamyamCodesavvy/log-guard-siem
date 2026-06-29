@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from app.config import get_settings
-from app.api import auth
+from app.api import auth, hosts
 
 settings = get_settings()
 
@@ -35,6 +35,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(auth.router)
+app.include_router(hosts.router)
 
 @app.get("/health")
 async def health_check():
