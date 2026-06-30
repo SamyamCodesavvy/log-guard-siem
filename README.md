@@ -1,4 +1,4 @@
-# 🛡 LogGuard-SIEM
+# 🛡 LogGuard-SIEM 
 
 A mini Security Information & Event Management (SIEM) platform built from scratch with **FastAPI** and **PostgreSQL**. It ingests security logs (SSH auth, sudo, nginx access logs), parses them into structured fields, runs them through a rule-based detection engine, and surfaces alerts and log activity through a REST API and a web dashboard.
 
@@ -169,4 +169,4 @@ log-guard-siem/
 
 ## License
 
-by SAMYAM GIRI  — built as a personal learning / portfolio project.
+by SAMYAM GIRI 💙 — built as a personal learning / portfolio project.
