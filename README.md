@@ -2,7 +2,7 @@
 
 A mini Security Information & Event Management (SIEM) platform built from scratch with **FastAPI** and **PostgreSQL**. It ingests security logs (SSH auth, sudo, nginx access logs), parses them into structured fields, runs them through a rule-based detection engine, and surfaces alerts and log activity through a REST API and a web dashboard.
 
-> 🚧 **Status:** Phases complete (project scaffold → database models → JWT auth → host management → log ingestion → detection engine → dashboard/search APIs → interactive frontend). This README will be updated as later phases (Docker, Nginx, monitoring, CI/CD, deployment) are completed.
+> 🚧 **Status:** Phases complete (project scaffold → database models → JWT auth → host management → log ingestion → detection engine → dashboard/search APIs → interactive frontend → testing with pytest). This README will be updated as later phases (Docker, Nginx, monitoring, CI/CD, deployment) are completed.
 
 ---
 
@@ -35,7 +35,7 @@ A mini Security Information & Event Management (SIEM) platform built from scratc
 | Database | PostgreSQL 15 |
 | ORM / migrations | SQLAlchemy 2.0 + Alembic |
 | Auth | JWT (python-jose) + bcrypt (passlib) |
-| Frontend | Jinja2, Tailwind CSS (CDN), Chart.js |
+| Frontend | Jinja2, Tailwind CSS , Chart.js |
 | Testing | pytest |
 | Environment | Kali Linux, Python 3.13 |
 
@@ -158,10 +158,10 @@ log-guard-siem/
 - [x] Phase 6 — Detection engine & alerts
 - [x] Phase 7 — Dashboard & search APIs
 - [x] Phase 8 — Interactive frontend (auth, live search, drill-down)
-- [ ] Phase 9 — Dockerizing everything 
-- [ ] Phase 10 — Nginx reverse proxy
-- [ ] Phase 11 — Prometheus & Grafana monitoring
-- [ ] Phase 12 — pytest test suite
+- [x] Phase 9 — pytest test suite
+- [ ] Phase 10 — Dockerizing everything 
+- [ ] Phase 11 — Nginx reverse proxy
+- [ ] Phase 12 — Prometheus & Grafana monitoring
 - [ ] Phase 13 — GitHub Actions CI/CD
 - [ ] Phase 14 — Production deployment
 
