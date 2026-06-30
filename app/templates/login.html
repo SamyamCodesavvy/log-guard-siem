@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — LogGuard SIEM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-gray-800 border border-blue-500 rounded-lg p-8 w-full max-w-sm">
+    <div class="text-center mb-6">
+      <div class="text-3xl mb-2">🛡</div>
+      <h1 class="text-xl font-bold text-blue-400">LogGuard SIEM</h1>
+      <p class="text-gray-400 text-sm">Sign in to continue</p>
+    </div>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="text-sm text-gray-400">Username</label>
+        <input id="username" type="text" required
+          class="w-full mt-1 bg-gray-900 border border-gray-700 rounded px-3 py-2 focus:border-blue-500 outline-none">
+      </div>
+      <div>
+        <label class="text-sm text-gray-400">Password</label>
+        <input id="password" type="password" required
+          class="w-full mt-1 bg-gray-900 border border-gray-700 rounded px-3 py-2 focus:border-blue-500 outline-none">
+      </div>
+      <p id="errorMsg" class="text-red-400 text-sm hidden"></p>
+      <button type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-500 rounded py-2 font-semibold transition">
+        Sign In
+      </button>
+    </form>
+  </div>
+
+  <script src="/static/js/auth.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.classList.add('hidden');
+      try {
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Login failed');
+        }
+        const data = await res.json();
+        // Fetch user profile for display in nav
+        const meRes = await fetch('/auth/me', {
+          headers: { 'Authorization': `Bearer ${data.access_token}` },
+        });
+        const me = await meRes.json();
+        setSession(data.access_token, me);
+        window.location.href = '/ui/dashboard';
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

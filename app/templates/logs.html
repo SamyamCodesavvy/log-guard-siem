@@ -1,0 +1,170 @@
+<!-- app/templates/logs.html -->
+{% extends 'base.html' %}
+{% block title %}Logs — LogGuard{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Logs</h1>
+
+<div class="bg-gray-800 rounded-lg p-4 mb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
+  <input id="fKeyword" placeholder="Keyword in message..."
+    class="bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm col-span-2 outline-none focus:border-blue-500">
+  <input id="fIp" placeholder="Source IP"
+    class="bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+  <input id="fUser" placeholder="Username"
+    class="bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+  <select id="fSeverity" class="bg-gray-900 border border-gray-700 rounded px-3 py-2 text-sm outline-none focus:border-blue-500">
+    <option value="">All severities</option>
+    <option value="critical">Critical</option>
+    <option value="high">High</option>
+    <option value="medium">Medium</option>
+    <option value="low">Low</option>
+    <option value="info">Info</option>
+  </select>
+</div>
+
+<div class="bg-gray-800 rounded-lg overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-900 text-gray-400">
+      <tr>
+        <th class="p-3 text-left">Time</th>
+        <th class="p-3 text-left">Host</th>
+        <th class="p-3 text-left">Severity</th>
+        <th class="p-3 text-left">Action</th>
+        <th class="p-3 text-left">User</th>
+        <th class="p-3 text-left">IP</th>
+        <th class="p-3 text-left">Message</th>
+      </tr>
+    </thead>
+    <tbody id="logsBody"></tbody>
+  </table>
+  <div id="logsEmpty" class="hidden text-center text-gray-500 py-8">No logs match these filters</div>
+</div>
+
+<!-- Detail modal -->
+<div id="logModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+  <div class="bg-gray-800 border border-blue-500 rounded-lg max-w-2xl w-full p-6 max-h-[85vh] overflow-y-auto">
+    <div class="flex justify-between items-start mb-4">
+      <h3 class="text-lg font-bold">Log Detail</h3>
+      <button onclick="closeLogModal()" class="text-gray-400 hover:text-white text-xl leading-none">&times;</button>
+    </div>
+    <div id="logModalBody" class="space-y-2 text-sm"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function severityBadge(sev) {
+  const colors = {
+    critical: 'bg-red-900 text-red-300', high: 'bg-orange-900 text-orange-300',
+    medium: 'bg-yellow-900 text-yellow-300', low: 'bg-blue-900 text-blue-300',
+    info: 'bg-gray-700 text-gray-300',
+  };
+  return `<span class="px-2 py-0.5 rounded text-xs ${colors[sev] || colors.info}">${sev}</span>`;
+}
+
+let debounceTimer;
+function debounceLoad() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(loadLogs, 300);
+}
+
+async function loadLogs() {
+  const params = new URLSearchParams();
+  const kw = document.getElementById('fKeyword').value.trim();
+  const ip = document.getElementById('fIp').value.trim();
+  const user = document.getElementById('fUser').value.trim();
+  const sev = document.getElementById('fSeverity').value;
+
+  // /search supports q/ip/username/severity; falls back to /logs when no filters set
+  let url;
+  if (kw || ip || user) {
+    if (kw) params.set('q', kw);
+    if (ip) params.set('ip', ip);
+    if (user) params.set('username', user);
+    if (sev) params.set('severity', sev);
+    params.set('limit', '100');
+    url = `/search/?${params.toString()}`;
+  } else {
+    if (sev) params.set('severity', sev);
+    params.set('limit', '100');
+    url = `/logs/?${params.toString()}`;
+  }
+
+  const res = await authFetch(url);
+  const data = await res.json();
+  let logs;
+  if (Array.isArray(data)) {
+    logs = data; // /logs/ returns a plain list
+  } else {
+    // /search/ currently returns only IDs — fetch full records
+    logs = data.results;
+  }
+  renderLogs(logs);
+}
+
+function renderLogs(logs) {
+  const body = document.getElementById('logsBody');
+  const empty = document.getElementById('logsEmpty');
+  if (!logs.length) {
+    body.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+  body.innerHTML = logs.map(log => `
+    <tr class="border-t border-gray-700 hover:bg-gray-700 cursor-pointer" onclick="openLogModal(${log.id})">
+      <td class="p-3 text-gray-400 text-xs whitespace-nowrap">${new Date(log.timestamp).toLocaleString()}</td>
+      <td class="p-3">${log.hostname || '-'}</td>
+      <td class="p-3">${severityBadge(log.severity)}</td>
+      <td class="p-3">${log.action || '-'}</td>
+      <td class="p-3">${log.username || '-'}</td>
+      <td class="p-3 font-mono text-xs">${log.source_ip || '-'}</td>
+      <td class="p-3 text-gray-300 text-xs truncate max-w-xs">${log.message}</td>
+    </tr>`).join('');
+}
+
+async function openLogModal(id) {
+  const res = await authFetch(`/logs/${id}`);
+  const log = await res.json();
+  document.getElementById('logModalBody').innerHTML = `
+    <div class="grid grid-cols-2 gap-3">
+      <div><span class="text-gray-400">Timestamp:</span> ${new Date(log.timestamp).toLocaleString()}</div>
+      <div><span class="text-gray-400">Severity:</span> ${severityBadge(log.severity)}</div>
+      <div><span class="text-gray-400">Host:</span> ${log.hostname || '-'}</div>
+      <div><span class="text-gray-400">Source:</span> ${log.source || '-'}</div>
+      <div><span class="text-gray-400">Program:</span> ${log.program || '-'}</div>
+      <div><span class="text-gray-400">Action:</span> ${log.action || '-'}</div>
+      <div><span class="text-gray-400">Username:</span> ${log.username || '-'}</div>
+      <div><span class="text-gray-400">Source IP:</span> <span class="font-mono">${log.source_ip || '-'}</span></div>
+    </div>
+    <div class="mt-4">
+      <div class="text-gray-400 mb-1">Parsed message</div>
+      <div class="bg-gray-900 rounded p-3 font-mono text-xs whitespace-pre-wrap">${log.message}</div>
+    </div>
+    <div class="mt-3">
+      <div class="text-gray-400 mb-1">Raw log line</div>
+      <div class="bg-gray-900 rounded p-3 font-mono text-xs whitespace-pre-wrap text-gray-400">${log.raw_log || '(not stored)'}</div>
+    </div>
+    <div class="mt-3 flex gap-3">
+      <a href="/ui/logs?ip=${log.source_ip || ''}" class="text-blue-400 text-xs hover:underline">See all logs from this IP →</a>
+    </div>`;
+  document.getElementById('logModal').classList.remove('hidden');
+}
+
+function closeLogModal() {
+  document.getElementById('logModal').classList.add('hidden');
+}
+
+['fKeyword', 'fIp', 'fUser'].forEach(id =>
+  document.getElementById(id).addEventListener('input', debounceLoad));
+document.getElementById('fSeverity').addEventListener('change', loadLogs);
+
+// Support deep links: /ui/logs?ip=1.2.3.4 or /ui/logs?open=42
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('ip')) document.getElementById('fIp').value = urlParams.get('ip');
+
+loadLogs().then(() => {
+  if (urlParams.get('open')) openLogModal(urlParams.get('open'));
+});
+</script>
+{% endblock %}

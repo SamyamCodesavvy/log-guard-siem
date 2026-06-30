@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from app.config import get_settings
-from app.api import auth, hosts, logs, alerts, dashboard, search
+from app.api import auth, hosts, logs, alerts, dashboard, search, ui
 
 settings = get_settings()
 
@@ -40,6 +40,8 @@ app.include_router(logs.router)
 app.include_router(alerts.router)
 app.include_router(dashboard.router)
 app.include_router(search.router)
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.include_router(ui.router)
 
 @app.get("/health")
 async def health_check():

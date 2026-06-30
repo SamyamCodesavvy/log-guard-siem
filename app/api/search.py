@@ -5,6 +5,7 @@ from app.api import logs
 from app.utils.database import get_db
 from app.authentication.dependencies import get_current_user
 from app.models.log import Log
+from app.schemas.log import LogResponse
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
@@ -32,4 +33,7 @@ def search(
     if severity:
         query = query.filter(Log.severity == severity)
     logs = query.order_by(Log.timestamp.desc()).offset(skip).limit(limit).all()
-    return {"results": [str(l.id) for l in logs], "count": len(logs)}
+    return {
+        "results": [LogResponse.model_validate(l) for l in logs],
+        "count": len(logs),
+    }

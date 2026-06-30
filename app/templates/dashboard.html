@@ -1,0 +1,136 @@
+<!-- app/templates/dashboard.html -->
+{% extends 'base.html' %}
+{% block title %}Dashboard — LogGuard{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold">Security Dashboard</h1>
+  <span id="refreshLabel" class="text-xs text-gray-500"></span>
+</div>
+
+<div id="statsGrid" class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+  <!-- filled by JS -->
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <div class="bg-gray-800 rounded-lg p-4 lg:col-span-2">
+    <h2 class="text-lg font-semibold mb-4">Logs Per Hour (Last 24h)</h2>
+    <canvas id="logsChart" height="90"></canvas>
+  </div>
+  <div class="bg-gray-800 rounded-lg p-4">
+    <h2 class="text-lg font-semibold mb-4">Top Attacker IPs</h2>
+    <ul id="topIpsList" class="space-y-2 text-sm"></ul>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="bg-gray-800 rounded-lg p-4">
+    <h2 class="text-lg font-semibold mb-4">Latest Alerts</h2>
+    <div id="latestAlerts" class="space-y-2 text-sm"></div>
+  </div>
+  <div class="bg-gray-800 rounded-lg p-4">
+    <h2 class="text-lg font-semibold mb-4">Latest Logs</h2>
+    <div id="latestLogs" class="space-y-2 text-sm"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let chart = null;
+
+function severityBadge(sev) {
+  const colors = {
+    critical: 'bg-red-900 text-red-300',
+    high: 'bg-orange-900 text-orange-300',
+    medium: 'bg-yellow-900 text-yellow-300',
+    low: 'bg-blue-900 text-blue-300',
+    info: 'bg-gray-700 text-gray-300',
+  };
+  return `<span class="px-2 py-0.5 rounded text-xs ${colors[sev] || colors.info}">${sev}</span>`;
+}
+
+async function loadDashboard() {
+  const res = await authFetch('/dashboard/');
+  const data = await res.json();
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="bg-gray-800 rounded-lg p-4 border border-blue-500">
+      <div class="text-3xl font-bold text-blue-400">${data.stats.total_logs}</div>
+      <div class="text-gray-400 text-sm mt-1">Total Logs</div>
+    </div>
+    <div class="bg-gray-800 rounded-lg p-4 border border-green-500">
+      <div class="text-3xl font-bold text-green-400">${data.stats.total_hosts}</div>
+      <div class="text-gray-400 text-sm mt-1">Hosts</div>
+    </div>
+    <div class="bg-gray-800 rounded-lg p-4 border border-yellow-500">
+      <div class="text-3xl font-bold text-yellow-400">${data.stats.total_alerts}</div>
+      <div class="text-gray-400 text-sm mt-1">Alerts</div>
+    </div>
+    <div class="bg-gray-800 rounded-lg p-4 border border-red-500">
+      <div class="text-3xl font-bold text-red-400">${data.stats.critical_alerts}</div>
+      <div class="text-gray-400 text-sm mt-1">Critical</div>
+    </div>
+    <div class="bg-gray-800 rounded-lg p-4 border border-purple-500">
+      <div class="text-3xl font-bold text-purple-400">${data.stats.todays_logs}</div>
+      <div class="text-gray-400 text-sm mt-1">Today's Logs</div>
+    </div>`;
+
+  // Logs-per-hour chart, sorted 0-23
+  const byHour = {};
+  data.logs_per_hour.forEach(d => byHour[d.hour] = d.count);
+  const labels = Array.from({length: 24}, (_, h) => `${h}:00`);
+  const counts = Array.from({length: 24}, (_, h) => byHour[h] || 0);
+
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('logsChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Logs received',
+        data: counts,
+        backgroundColor: 'rgba(59,130,246,0.7)',
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      plugins: { legend: { labels: { color: '#e2e8f0' } } },
+      scales: {
+        x: { ticks: { color: '#94a3b8' }, grid: { color: '#1f2937' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: '#1f2937' }, beginAtZero: true },
+      },
+    },
+  });
+
+  document.getElementById('topIpsList').innerHTML = data.top_attack_ips.length
+    ? data.top_attack_ips.map(ip => `
+        <li class="flex justify-between items-center bg-gray-900 rounded px-3 py-2">
+          <a href="/ui/logs?ip=${ip.ip}" class="font-mono text-blue-300 hover:underline">${ip.ip}</a>
+          <span class="text-red-400 font-semibold">${ip.count}</span>
+        </li>`).join('')
+    : '<li class="text-gray-500">No failed logins recorded</li>';
+
+  document.getElementById('latestAlerts').innerHTML = data.latest_alerts.length
+    ? data.latest_alerts.map(a => `
+        <a href="/ui/alerts?open=${a.id}" class="block bg-gray-900 rounded px-3 py-2 hover:bg-gray-700">
+          <div class="flex justify-between"><span class="font-medium">${a.rule_name}</span>${severityBadge(a.severity)}</div>
+          <div class="text-gray-400 text-xs mt-1">${a.hostname || '-'} · ${new Date(a.timestamp).toLocaleString()}</div>
+        </a>`).join('')
+    : '<div class="text-gray-500">No alerts yet</div>';
+
+  document.getElementById('latestLogs').innerHTML = data.latest_logs.length
+    ? data.latest_logs.map(l => `
+        <a href="/ui/logs?open=${l.id}" class="block bg-gray-900 rounded px-3 py-2 hover:bg-gray-700">
+          <div class="flex justify-between"><span class="font-medium">${l.hostname || '-'}</span>${severityBadge(l.severity)}</div>
+          <div class="text-gray-400 text-xs mt-1 truncate">${l.message}</div>
+        </a>`).join('')
+    : '<div class="text-gray-500">No logs yet</div>';
+
+  document.getElementById('refreshLabel').textContent =
+    `Updated ${new Date().toLocaleTimeString()}`;
+}
+
+loadDashboard();
+setInterval(loadDashboard, 15000); // auto-refresh every 15s
+</script>
+{% endblock %}
