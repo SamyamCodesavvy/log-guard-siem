@@ -2,7 +2,7 @@
 
 A mini Security Information & Event Management (SIEM) platform built from scratch with **FastAPI** and **PostgreSQL**. It ingests security logs (SSH auth, sudo, nginx access logs), parses them into structured fields, runs them through a rule-based detection engine, and surfaces alerts and log activity through a REST API and a web dashboard.
 
-> 🚧 **Status:** Phases complete (project scaffold → database models → JWT auth → host management → log ingestion → detection engine → dashboard/search APIs → interactive frontend → testing with pytest). This README will be updated as later phases (Docker, Nginx, monitoring, CI/CD, deployment) are completed.
+> 🚧 **Status:** Phases complete (project scaffold → database models → JWT auth → host management → log ingestion → detection engine → dashboard/search APIs → interactive frontend → testing with pytest). This README will be updated as later phases (Docker, Nginx, monitoring, CI/CD) are completed.
 
 ---
 
@@ -163,7 +163,6 @@ log-guard-siem/
 - [ ] Phase 11 — Nginx reverse proxy
 - [ ] Phase 12 — Prometheus & Grafana monitoring
 - [ ] Phase 13 — GitHub Actions CI/CD
-- [ ] Phase 14 — Production deployment
 
 ---
 
