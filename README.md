@@ -2,7 +2,7 @@
 
 A mini Security Information & Event Management (SIEM) platform built from scratch with **FastAPI** and **PostgreSQL**. It ingests security logs (SSH auth, sudo, nginx access logs), parses them into structured fields, runs them through a rule-based detection engine, and surfaces alerts and log activity through a REST API and a web dashboard.
 
-> 🚧 **Status:** Phases 1–8 complete (project scaffold → database models → JWT auth → host management → log ingestion → detection engine → dashboard/search APIs → interactive frontend). This README will be updated as later phases (Docker, Nginx, monitoring, CI/CD, deployment) are completed.
+> 🚧 **Status:** Phases complete (project scaffold → database models → JWT auth → host management → log ingestion → detection engine → dashboard/search APIs → interactive frontend). This README will be updated as later phases (Docker, Nginx, monitoring, CI/CD, deployment) are completed.
 
 ---
 
@@ -61,7 +61,7 @@ A mini Security Information & Event Management (SIEM) platform built from scratc
 
 ```bash
 # 1. Clone and enter the repo
-git clone https://github.com/YOUR_USERNAME/log-guard-siem.git
+git clone https://github.com/SamyamCodesavvy/log-guard-siem.git
 cd log-guard-siem
 
 # 2. Set up Python environment
@@ -158,7 +158,7 @@ log-guard-siem/
 - [x] Phase 6 — Detection engine & alerts
 - [x] Phase 7 — Dashboard & search APIs
 - [x] Phase 8 — Interactive frontend (auth, live search, drill-down)
-- [ ] Phase 9 — Dockerizing everything
+- [ ] Phase 9 — Dockerizing everything 
 - [ ] Phase 10 — Nginx reverse proxy
 - [ ] Phase 11 — Prometheus & Grafana monitoring
 - [ ] Phase 12 — pytest test suite
@@ -169,4 +169,4 @@ log-guard-siem/
 
 ## License
 
-MIT — built as a personal learning / portfolio project.
+by SAMYAM GIRI  — built as a personal learning / portfolio project.
