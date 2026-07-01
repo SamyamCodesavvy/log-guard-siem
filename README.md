@@ -1,29 +1,98 @@
-# 🛡 LogGuard-SIEM 
+# 🛡️ LogGuard-SIEM
 
-A mini Security Information & Event Management (SIEM) platform built from scratch with **FastAPI** and **PostgreSQL**. It ingests security logs (SSH auth, sudo, nginx access logs), parses them into structured fields, runs them through a rule-based detection engine, and surfaces alerts and log activity through a REST API and a web dashboard.
+**A mini Security Information & Event Management (SIEM) platform, built from scratch.**
 
-> 🚧 **Status:** Phases complete (project scaffold → database models → JWT auth → host management → log ingestion → detection engine → dashboard/search APIs → interactive frontend → testing with pytest). This README will be updated as later phases (Docker, Nginx, monitoring, CI/CD) are completed.
+LogGuard-SIEM ingests security logs (SSH auth, sudo, nginx access logs), parses them into structured fields with a custom regex engine, runs them through a rule-based detection pipeline, and surfaces alerts and log activity through a REST API and a live web dashboard — the same core loop that commercial tools like Splunk and Wazuh are built around, implemented end-to-end by one person.
+
+![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=flat&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white)
+![Nginx](https://img.shields.io/badge/Nginx-Reverse%20Proxy-009639?style=flat&logo=nginx&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-E6522C?style=flat&logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-Dashboards-F46800?style=flat&logo=grafana&logoColor=white)
+![CI](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=flat&logo=githubactions&logoColor=white)
+![Tests](https://img.shields.io/badge/pytest-passing-brightgreen?style=flat&logo=pytest&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+
+> 🚧 **Status:** Core platform complete — scaffold → database models → JWT auth → host management → log ingestion → detection engine → dashboard/search APIs → interactive frontend → Dockerized multi-service stack → Nginx reverse proxy → Prometheus/Grafana monitoring → pytest suite → GitHub Actions CI/CD. Production VPS deployment intentionally out of scope for this iteration (see [Roadmap](#roadmap)).
+
+---
+
+## Table of Contents
+
+- [Why This Project](#why-this-project)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Screenshots](#screenshots)
+- [Quick Start](#quick-start)
+- [API Endpoints](#api-endpoints)
+- [Detection Rules](#detection-rules)
+- [Testing & CI/CD](#testing--cicd)
+- [Monitoring](#monitoring)
+- [Project Structure](#project-structure)
+- [Skills Demonstrated](#skills-demonstrated)
+- [Roadmap](#roadmap)
+- [License](#license)
+
+---
+
+## Why This Project
+
+Most portfolio projects are CRUD apps. LogGuard-SIEM is a small but complete **security engineering** system: it takes unstructured log text, extracts meaning from it, correlates events across time windows, and turns raw noise into actionable alerts — while being packaged the way a real backend service would be (containerized, monitored, tested, and continuously integrated).
+
+It demonstrates the full loop a security engineer / backend engineer is expected to own:
+
+**ingest → parse → detect → alert → visualize → ship (Docker) → monitor (Prometheus/Grafana) → verify (pytest) → automate (CI/CD)**
+
+---
+
+## Architecture
+
+```
+                    ┌─────────────┐
+   Log sources ───▶ │   Nginx     │  reverse proxy, port 80
+ (auth.log, nginx)  └──────┬──────┘
+                           │
+                    ┌──────▼──────┐        ┌──────────────┐
+                    │  FastAPI    │◀──────▶│  PostgreSQL  │
+                    │  app        │        │  (SQLAlchemy │
+                    │             │        │   + Alembic) │
+                    │  ┌────────┐ │        └──────────────┘
+                    │  │ Regex  │ │
+                    │  │ Parser │ │
+                    │  └───┬────┘ │
+                    │  ┌───▼────┐ │
+                    │  │Detection│ │  5 correlation rules
+                    │  │ Engine │ │  (brute force, priv-esc, etc.)
+                    │  └───┬────┘ │
+                    │  ┌───▼────┐ │
+                    │  │ Alerts │ │
+                    │  └────────┘ │
+                    └──────┬──────┘
+                           │ /metrics
+                    ┌──────▼──────┐      ┌─────────┐
+                    │ Prometheus  │─────▶│ Grafana │
+                    └─────────────┘      └─────────┘
+```
+
 
 ---
 
 ## Features
 
-- **JWT authentication** with bcrypt password hashing and role-based access (admin / analyst / viewer)
-- **Host management** — register and track monitored machines
-- **Log ingestion API** — single and batch ingestion, with a regex-based parser that extracts hostname, program, user, source IP, and action from raw syslog/nginx lines
-- **Rule-based detection engine** — automatically generates alerts on every ingested log:
-  - SSH Brute Force (5+ failed logins from one IP in 5 minutes)
-  - Privilege Escalation Attempt (sudo authentication failure)
-  - Root Login Detected
-  - Credential Sharing Detected (3+ distinct users from one IP in 1 hour)
-  - Possible Web Attack (10+ HTTP 401/403 from one IP in 10 minutes)
-- **Dashboard API** — aggregate stats, logs-per-hour, top attacker IPs, top failed users
+- **JWT authentication** with bcrypt password hashing and role-based access control (admin / analyst / viewer)
+- **Host management** — register and track monitored machines (CRUD)
+- **Log ingestion API** — single and batch ingestion, with a regex-based parser extracting hostname, program, user, source IP, and action from raw syslog/nginx lines
+- **Rule-based detection engine** — every ingested log is evaluated against 5 correlation rules in real time (see [Detection Rules](#detection-rules))
+- **Dashboard API** — aggregate stats, logs-per-hour, top attacker IPs, top failed-login users
 - **Search API** — filter logs by keyword, IP, username, hostname, severity
-- **Web frontend** (Jinja2 + Tailwind + Chart.js):
-  - Login page with JWT stored client-side
-  - Dashboard with live stat cards and an auto-refreshing logs-per-hour chart
-  - Logs page with real-time search/filter and a click-to-expand detail view (parsed fields + raw log line)
-  - Alerts page with real-time filter and a detail view with inline status resolution (Investigating / Resolved / False Positive)
+- **Web frontend** (Jinja2 + Tailwind + Chart.js) — dark-themed dashboard, live logs table, alerts table with inline status resolution (Investigating / Resolved / False Positive)
+- **Containerized deployment** — 5-service Docker Compose stack (app, PostgreSQL, Nginx, Prometheus, Grafana), single-command startup
+- **Observability** — Prometheus scraping `/metrics`, Grafana dashboards for request rate/latency/error rate
+- **Automated testing** — pytest suite covering auth flows, log parsing, and detection logic, run against an in-memory SQLite DB
+- **CI/CD pipeline** — GitHub Actions runs tests, linting, and a Docker build on every push/PR
 
 ---
 
@@ -34,9 +103,13 @@ A mini Security Information & Event Management (SIEM) platform built from scratc
 | API framework | FastAPI |
 | Database | PostgreSQL 15 |
 | ORM / migrations | SQLAlchemy 2.0 + Alembic |
-| Auth | JWT (python-jose) + bcrypt (passlib) |
-| Frontend | Jinja2, Tailwind CSS , Chart.js |
-| Testing | pytest |
+| Auth | JWT (`python-jose`) + bcrypt (`passlib`) |
+| Frontend | Jinja2, Tailwind CSS, Chart.js |
+| Containerization | Docker + Docker Compose (5 services) |
+| Reverse proxy | Nginx |
+| Monitoring | Prometheus + Grafana |
+| Testing | pytest, pytest-cov, SQLite (test DB) |
+| CI/CD | GitHub Actions (test → lint → Docker build) |
 | Environment | Kali Linux, Python 3.13 |
 
 ---
@@ -55,6 +128,7 @@ A mini Security Information & Event Management (SIEM) platform built from scratc
 |---|
 | ![Alert Detail](docs/screenshots/alert_detail.png) |
 
+
 ---
 
 ## Quick Start
@@ -64,29 +138,36 @@ A mini Security Information & Event Management (SIEM) platform built from scratc
 git clone https://github.com/SamyamCodesavvy/log-guard-siem.git
 cd log-guard-siem
 
-# 2. Set up Python environment
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# 2. Configure environment
+cp .env.example .env   # set SECRET_KEY to a long random string
 
-# 3. Start PostgreSQL (Docker)
-docker run -d --name siem-postgres \
-  -e POSTGRES_USER=siem_user -e POSTGRES_PASSWORD=siem_pass -e POSTGRES_DB=siem_db \
-  -p 5432:5432 postgres:15
+# 3. Build and start the full stack (FastAPI + PostgreSQL + Nginx + Prometheus + Grafana)
+docker compose up --build -d
 
-# 4. Configure environment
-cp .env.example .env   # then edit SECRET_KEY etc.
-
-# 5. Run migrations
-alembic upgrade head
-
-# 6. Start the app
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# 4. Check every service is healthy
+docker compose ps
 ```
 
 Then visit:
-- **Web UI:** `http://localhost:8000/ui/login`
-- **API docs (Swagger):** `http://localhost:8000/docs`
+
+| Service | URL |
+|---|---|
+| Web UI | `http://localhost/ui/dashboard` |
+| API docs (Swagger) | `http://localhost/docs` |
+| Health check | `http://localhost/health` |
+| Prometheus | `http://localhost:9090` |
+| Grafana | `http://localhost:3000` (admin / admin on first login) |
+
+### Local development (without Docker)
+
+```bash
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+docker run -d --name siem-postgres -e POSTGRES_USER=siem_user \
+  -e POSTGRES_PASSWORD=siem_pass -e POSTGRES_DB=siem_db -p 5432:5432 postgres:15
+alembic upgrade head
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
 ---
 
@@ -111,10 +192,13 @@ Then visit:
 | GET | `/dashboard/` | Dashboard statistics | Yes |
 | GET | `/search/` | Search logs | Yes |
 | GET | `/health` | Health check | No |
+| GET | `/metrics` | Prometheus metrics | No |
 
 ---
 
 ## Detection Rules
+
+Every log that hits `/logs` or `/logs/batch` is run through the detection engine immediately after parsing:
 
 | Rule | Trigger | Severity |
 |---|---|---|
@@ -126,46 +210,97 @@ Then visit:
 
 ---
 
+## Testing & CI/CD
+
+- **pytest suite** covers registration/login/token flows, protected-route enforcement, and log-parser correctness (failed login, successful login, sudo failure) against an isolated in-memory SQLite database — no PostgreSQL/Docker needed to run tests locally.
+
+```bash
+pytest tests/ -v
+pytest tests/ --cov=app --cov-report=term-missing
+```
+
+- **GitHub Actions** (`.github/workflows/ci.yml`) runs on every push and pull request to `main`/`develop`:
+  1. **test** — installs dependencies, runs the full pytest suite with coverage
+  2. **lint** — flake8 static analysis
+  3. **docker** — builds the production Docker image to catch build breakage before merge
+
+A green checkmark on the Actions tab means the app installs cleanly, passes all tests, and builds — the same gate a real engineering team would enforce before merging.
+
+---
+
+## Monitoring
+
+- `prometheus-fastapi-instrumentator` exposes request count, latency, and error-rate metrics at `/metrics`.
+- Prometheus scrapes the FastAPI app every 15 seconds (`prometheus/prometheus.yml`).
+- Grafana is pre-wired to Prometheus as a data source; import dashboard ID `12900` (or build a custom one) for request-rate/latency/error panels.
+
+---
+
 ## Project Structure
 
 ```
 log-guard-siem/
 ├── app/
-│   ├── api/            # FastAPI routers (auth, hosts, logs, alerts, dashboard, search, ui)
-│   ├── authentication/ # JWT + bcrypt logic
+│   ├── api/             # FastAPI routers (auth, hosts, logs, alerts, dashboard, search, ui)
+│   ├── authentication/  # JWT + bcrypt logic
 │   ├── detection/       # Rule-based detection engine
 │   ├── models/          # SQLAlchemy ORM models
-│   ├── schemas/          # Pydantic request/response schemas
-│   ├── services/         # Business logic (host, dashboard)
-│   ├── static/js/        # Frontend auth/fetch helpers
-│   ├── templates/        # Jinja2 pages (login, dashboard, logs, alerts)
+│   ├── schemas/         # Pydantic request/response schemas
+│   ├── services/        # Business logic (host, dashboard)
+│   ├── static/js/       # Frontend auth/fetch helpers
+│   ├── templates/       # Jinja2 pages (login, dashboard, logs, alerts)
+│   ├── utils/           # DB session, log parser
+│   ├── config.py
 │   └── main.py
-├── tests/                 # pytest suite
+├── tests/                # pytest suite (auth, detection/parser)
 ├── alembic/               # DB migrations
+├── nginx/nginx.conf        # Reverse proxy config
+├── prometheus/prometheus.yml
+├── .github/workflows/ci.yml # GitHub Actions pipeline
+├── docker-compose.yml       # 5-service stack
+├── Dockerfile
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
+## Skills Demonstrated
+
+| Skill Area | Evidence in this Project |
+|---|---|
+| Backend Development | FastAPI REST API with 15+ endpoints, Pydantic validation, background-triggered detection on ingest |
+| Database Engineering | PostgreSQL schema design, SQLAlchemy 2.0 ORM, Alembic migrations |
+| Security Engineering | JWT auth, bcrypt hashing, role-based access control, regex-based log parsing, 5-rule threat detection engine |
+| Linux & Networking | SSH/syslog log format parsing, IP-based correlation, Nginx reverse proxy configuration |
+| DevOps & Containerization | Multi-service Docker Compose (app, DB, proxy, monitoring), custom Dockerfile, container health checks |
+| Monitoring & Observability | Prometheus metrics instrumentation, Grafana dashboarding |
+| CI/CD | GitHub Actions pipeline — automated test, lint, and Docker build on every push |
+| Testing | pytest unit + integration tests, FastAPI `TestClient`, isolated SQLite test database |
+
+---
+
 ## Roadmap
 
+- [x] Phase 0 — Environment setup (Kali Linux, Python 3.13, Docker, Git)
 - [x] Phase 1 — Project scaffold & FastAPI foundation
-- [x] Phase 2 — Database models & migrations
+- [x] Phase 2 — Database models & Alembic migrations
 - [x] Phase 3 — JWT authentication
 - [x] Phase 4 — Host management API
 - [x] Phase 5 — Log ingestion & parser
 - [x] Phase 6 — Detection engine & alerts
 - [x] Phase 7 — Dashboard & search APIs
-- [x] Phase 8 — Interactive frontend (auth, live search, drill-down)
-- [x] Phase 9 — pytest test suite
-- [ ] Phase 10 — Dockerizing everything 
-- [ ] Phase 11 — Nginx reverse proxy
-- [ ] Phase 12 — Prometheus & Grafana monitoring
-- [ ] Phase 13 — GitHub Actions CI/CD
+- [x] Phase 8 — Interactive Jinja2 frontend
+- [x] Phase 9 — Dockerizing everything (5-service Compose stack)
+- [x] Phase 10 — Nginx reverse proxy
+- [x] Phase 11 — Prometheus & Grafana monitoring
+- [x] Phase 12 — pytest test suite
+- [x] Phase 13 — GitHub Actions CI/CD
 
 ---
 
 ## License
 
-by SAMYAM GIRI 💙 — built as a personal learning / portfolio project.
+Built by **Samyam Giri** 💙 as a personal learning / portfolio project demonstrating full-stack security engineering: from raw log line to correlated alert to containerized, monitored, continuously-integrated service.
+
+MIT License.
