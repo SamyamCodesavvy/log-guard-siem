@@ -15,7 +15,6 @@ LogGuard-SIEM ingests security logs (SSH auth, sudo, nginx access logs), parses 
 ![Tests](https://img.shields.io/badge/pytest-passing-brightgreen?style=flat&logo=pytest&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-> 🚧 **Status:** Core platform complete — scaffold → database models → JWT auth → host management → log ingestion → detection engine → dashboard/search APIs → interactive frontend → Dockerized multi-service stack → Nginx reverse proxy → Prometheus/Grafana monitoring → pytest suite → GitHub Actions CI/CD. Production VPS deployment intentionally out of scope for this iteration (see [Roadmap](#roadmap)).
 
 ---
 
