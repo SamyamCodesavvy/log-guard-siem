@@ -49,35 +49,12 @@ It demonstrates the full loop a security engineer / backend engineer is expected
 
 ## Architecture
 
-```
-                    ┌─────────────┐
-   Log sources ───▶ │   Nginx     │  reverse proxy, port 80
- (auth.log, nginx)  └──────┬──────┘
-                           │
-                    ┌──────▼──────┐        ┌──────────────┐
-                    │  FastAPI    │◀──────▶│  PostgreSQL  │
-                    │  app        │        │  (SQLAlchemy │
-                    │             │        │   + Alembic) │
-                    │  ┌────────┐ │        └──────────────┘
-                    │  │ Regex  │ │
-                    │  │ Parser │ │
-                    │  └───┬────┘ │
-                    │  ┌───▼────┐ │
-                    │  │Detection│ │  5 correlation rules
-                    │  │ Engine │ │  (brute force, priv-esc, etc.)
-                    │  └───┬────┘ │
-                    │  ┌───▼────┐ │
-                    │  │ Alerts │ │
-                    │  └────────┘ │
-                    └──────┬──────┘
-                           │ /metrics
-                    ┌──────▼──────┐      ┌─────────┐
-                    │ Prometheus  │─────▶│ Grafana │
-                    └─────────────┘      └─────────┘
-```
-
+<p align="center">
+  <img src="docs/architecture/siem-architecture.png" alt="LogGuard SIEM Architecture" width="100%">
+</p>
 
 ---
+
 
 ## Features
 
