@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Optional
-from app.api import logs
 from app.utils.database import get_db
 from app.authentication.dependencies import get_current_user
 from app.models.log import Log
@@ -35,6 +34,6 @@ def search(
         query = query.filter(Log.severity == severity)
     logs = query.order_by(Log.timestamp.desc()).offset(skip).limit(limit).all()
     return {
-        "results": [LogResponse.model_validate(l) for l in logs],
+        "results": [LogResponse.model_validate(log) for log in logs],
         "count": len(logs),
     }

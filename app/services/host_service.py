@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.host import Host
-from app.schemas import host
 from app.schemas.host import HostCreate, HostUpdate
 
 
