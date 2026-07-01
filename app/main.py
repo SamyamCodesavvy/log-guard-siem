@@ -16,18 +16,17 @@ os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("logs/application.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("logs/application.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     yield
     logger.info("Shutting down...")
+
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -44,12 +43,14 @@ app.include_router(search.router)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(ui.router)
 
+
 @app.get("/health")
 async def health_check():
     return {
         "status": "healthy",
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
-}
+    }
 
-Instrumentator().instrument(app).expose(app, endpoint='/metrics')
+
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")

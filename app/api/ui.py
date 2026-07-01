@@ -39,12 +39,7 @@ async def logs_page(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    logs = (
-        db.query(Log)
-        .order_by(Log.timestamp.desc())
-        .limit(100)
-        .all()
-    )
+    logs = db.query(Log).order_by(Log.timestamp.desc()).limit(100).all()
 
     return templates.TemplateResponse(
         "logs.html",
@@ -60,12 +55,7 @@ async def alerts_page(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    alerts = (
-        db.query(Alert)
-        .order_by(Alert.timestamp.desc())
-        .limit(100)
-        .all()
-    )
+    alerts = db.query(Alert).order_by(Alert.timestamp.desc()).limit(100).all()
 
     return templates.TemplateResponse(
         "alerts.html",
@@ -74,4 +64,3 @@ async def alerts_page(
             "alerts": alerts,
         },
     )
-

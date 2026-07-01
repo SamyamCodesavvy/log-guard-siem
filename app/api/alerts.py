@@ -29,12 +29,7 @@ def list_alerts(
     if status:
         query = query.filter(Alert.status == status)
 
-    return (
-        query.order_by(Alert.timestamp.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    return query.order_by(Alert.timestamp.desc()).offset(skip).limit(limit).all()
 
 
 @router.get("/{alert_id}", response_model=AlertResponse)

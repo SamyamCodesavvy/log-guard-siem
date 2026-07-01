@@ -22,7 +22,6 @@ PATTERNS = {
     # Example:
     # Jun 21 08:20:44 ubuntu sshd[1234]:
     # Failed password for admin from 1.2.3.4
-
     "syslog": re.compile(
         r"(?P<month>\w+)\s+"
         r"(?P<day>\d+)\s+"
@@ -31,28 +30,16 @@ PATTERNS = {
         r"(?P<prog>\S+?)(?:\[(?P<pid>\d+)\])?:\s+"
         r"(?P<msg>.*)"
     ),
-
     "failed_password": re.compile(
-        r"Failed password for (?:invalid user )?(?P<user>\S+) "
-        r"from (?P<ip>[\d.]+)"
+        r"Failed password for (?:invalid user )?(?P<user>\S+) " r"from (?P<ip>[\d.]+)"
     ),
-
     "accepted_password": re.compile(
-        r"Accepted password for (?P<user>\S+) "
-        r"from (?P<ip>[\d.]+)"
+        r"Accepted password for (?P<user>\S+) " r"from (?P<ip>[\d.]+)"
     ),
-
-    "sudo_failure": re.compile(
-        r"sudo:.*authentication failure.*user=(?P<user>\S+)"
-    ),
-
-    "root_login": re.compile(
-        r"session opened for user root"
-    ),
-
+    "sudo_failure": re.compile(r"sudo:.*authentication failure.*user=(?P<user>\S+)"),
+    "root_login": re.compile(r"session opened for user root"),
     "nginx_access": re.compile(
-        r'(?P<ip>[\d.]+).*"(?P<method>\w+) '
-        r'(?P<path>\S+).*" (?P<status>\d{3})'
+        r'(?P<ip>[\d.]+).*"(?P<method>\w+) ' r'(?P<path>\S+).*" (?P<status>\d{3})'
     ),
 }
 

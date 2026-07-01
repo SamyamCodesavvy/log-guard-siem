@@ -37,8 +37,9 @@ def _save_and_analyze(
     db.add(log)
     db.commit()
     db.refresh(log)
-    
+
     from app.detection.engine import run_detection
+
     run_detection(db, log)
 
     return log
@@ -98,12 +99,7 @@ def list_logs(
     if hostname:
         query = query.filter(Log.hostname == hostname)
 
-    return (
-        query.order_by(Log.timestamp.desc())
-        .offset(skip)
-        .limit(limit)
-        .all()
-    )
+    return query.order_by(Log.timestamp.desc()).offset(skip).limit(limit).all()
 
 
 @router.get("/{log_id}", response_model=LogResponse)

@@ -9,27 +9,28 @@ from app.schemas.log import LogResponse
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
+
 @router.get("/")
 def search(
-    q: Optional[str] = Query(None, description='Keyword'),
+    q: Optional[str] = Query(None, description="Keyword"),
     ip: Optional[str] = Query(None),
-    username: Optional[str] = Query(None), 
+    username: Optional[str] = Query(None),
     hostname: Optional[str] = Query(None),
     severity: Optional[str] = Query(None),
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
     query = db.query(Log)
     if q:
-        query = query.filter(Log.message.ilike(f'%{q}%'))
+        query = query.filter(Log.message.ilike(f"%{q}%"))
     if ip:
         query = query.filter(Log.source_ip == ip)
     if username:
-        query = query.filter(Log.username.ilike(f'%{username}%'))
+        query = query.filter(Log.username.ilike(f"%{username}%"))
     if hostname:
-        query = query.filter(Log.hostname.ilike(f'%{hostname}%'))
+        query = query.filter(Log.hostname.ilike(f"%{hostname}%"))
     if severity:
         query = query.filter(Log.severity == severity)
     logs = query.order_by(Log.timestamp.desc()).offset(skip).limit(limit).all()

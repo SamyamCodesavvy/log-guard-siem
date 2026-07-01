@@ -8,9 +8,10 @@ from app.models.user import User, UserRole
 
 security = HTTPBearer()
 
+
 def get_current_user(
-        credentials: HTTPAuthorizationCredentials = Depends(security),
-        db: Session = Depends(get_db)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
 ) -> User:
     """Extract user from JWT token. Raises 401 if invalid."""
     token = credentials.credentials
@@ -25,10 +26,12 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="User not found or inactive")
     return user
 
+
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != UserRole.admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
+
 
 def require_analyst(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role not in [UserRole.admin, UserRole.analyst]:

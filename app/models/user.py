@@ -3,14 +3,16 @@ from sqlalchemy.sql import func
 from app.utils.database import Base
 import enum
 
+
 class UserRole(str, enum.Enum):
     admin = "admin"
     analyst = "analyst"
     viewer = "viewer"
 
+
 class User(Base):
     __tablename__ = "users"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(100), unique=True, nullable=False, index=True)

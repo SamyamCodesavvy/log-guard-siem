@@ -6,8 +6,9 @@ from app.services import dashboard_service
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
-@router.get("/")
-def get_dashboard(db: Session = Depends(get_db),
-                  current_user=Depends(get_current_user)):
-    return dashboard_service.get_dashboard_stats(db)
 
+@router.get("/")
+def get_dashboard(
+    db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
+    return dashboard_service.get_dashboard_stats(db)

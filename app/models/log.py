@@ -3,6 +3,7 @@ from sqlalchemy.sql import func
 from app.utils.database import Base
 import enum
 
+
 class LogSeverity(str, enum.Enum):
     low = "low"
     medium = "medium"
@@ -10,15 +11,16 @@ class LogSeverity(str, enum.Enum):
     critical = "critical"
     info = "info"
 
+
 class Log(Base):
     __tablename__ = "logs"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     timestamp = Column(DateTime(timezone=True), nullable=False)
     hostname = Column(String(100), index=True)
-    source = Column(String(50))   # auth.log, syslog, nginx, etc.
+    source = Column(String(50))  # auth.log, syslog, nginx, etc.
     severity = Column(Enum(LogSeverity), default=LogSeverity.info)
-    program = Column(String(100))   # sshd, sudo, cron...
+    program = Column(String(100))  # sshd, sudo, cron...
     pid = Column(Integer)
     username = Column(String(100), index=True)
     source_ip = Column(String(45), index=True)

@@ -3,14 +3,16 @@ from sqlalchemy.sql import func
 from app.utils.database import Base
 import enum
 
+
 class HostStatus(str, enum.Enum):
-    active = "active"  
+    active = "active"
     inactive = "inactive"
     unknown = "unknown"
 
+
 class Host(Base):
     __tablename__ = "hosts"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     hostname = Column(String(100), unique=True, nullable=False, index=True)
     ip_address = Column(String(45), nullable=False)
