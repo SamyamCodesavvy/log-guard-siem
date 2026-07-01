@@ -1,0 +1,79 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: siem-db
+    environment:
+      POSTGRES_USER: siem_user
+      POSTGRES_PASSWORD: siem_pass
+      POSTGRES_DB: siem_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U siem_user -d siem_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - siem-network
+
+  app:
+    build: .
+    container_name: siem-app
+    environment:
+      DATABASE_URL: postgresql://siem_user:siem_pass@db:5432/siem_db
+      SECRET_KEY: ${SECRET_KEY:-change-in-production-use-long-random-string}
+      DEBUG: "false"
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - siem-network
+    command: >
+      sh -c "alembic upgrade head &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  nginx:
+    image: nginx:alpine
+    container_name: siem-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - siem-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: siem-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - siem-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: siem-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - siem-network
+
+volumes:
+  postgres_data:
+  grafana_data:
+
+networks:
+  siem-network:
+    driver: bridge
