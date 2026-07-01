@@ -151,9 +151,9 @@ Then visit:
 
 | Service | URL |
 |---|---|
-| Web UI | `http://localhost/ui/dashboard` |
-| API docs (Swagger) | `http://localhost/docs` |
-| Health check | `http://localhost/health` |
+| Web UI | `http://localhost:8080/ui/dashboard` |
+| API docs (Swagger) | `http://localhost:8080/docs` |
+| Health check | `http://localhost:8080/health` |
 | Prometheus | `http://localhost:9090` |
 | Grafana | `http://localhost:3000` (admin / admin on first login) |
 
