@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from app.config import get_settings
+from prometheus_fastapi_instrumentator import Instrumentator
 from app.api import auth, hosts, logs, alerts, dashboard, search, ui
 
 settings = get_settings()
@@ -50,3 +51,5 @@ async def health_check():
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
 }
+
+Instrumentator().instrument(app).expose(app, endpoint='/metrics')
